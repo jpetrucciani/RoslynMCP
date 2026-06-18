@@ -1,8 +1,8 @@
+using Microsoft.Build.Locator;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
-using Microsoft.Build.Locator;
 using RoslynMcpServer.Services;
 
 namespace RoslynMcpServer
@@ -13,7 +13,10 @@ namespace RoslynMcpServer
         {
             // Create a temporary logger for early initialization
             using var loggerFactory = LoggerFactory.Create(builder =>
-                builder.AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Information));
+                builder.AddConsole(options =>
+                    options.LogToStandardErrorThreshold = LogLevel.Information
+                )
+            );
             var tempLogger = loggerFactory.CreateLogger<Program>();
 
             // Register MSBuild before any workspace operations
@@ -54,10 +57,7 @@ namespace RoslynMcpServer
             // Configure MCP server
             try
             {
-                builder.Services
-                    .AddMcpServer()
-                    .WithStdioServerTransport()
-                    .WithToolsFromAssembly();
+                builder.Services.AddMcpServer().WithStdioServerTransport().WithToolsFromAssembly();
 
                 var host = builder.Build();
 
