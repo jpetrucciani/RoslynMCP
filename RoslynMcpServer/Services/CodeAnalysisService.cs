@@ -32,13 +32,13 @@ namespace RoslynMcpServer.Services
             }
 
             var workspace = MSBuildWorkspace.Create();
-            workspace.WorkspaceFailed += (_, args) =>
+            workspace.RegisterWorkspaceFailedHandler(args =>
             {
                 _logger.LogWarning(
                     "MSBuild workspace diagnostic: {Diagnostic}",
                     args.Diagnostic.Message
                 );
-            };
+            });
 
             Solution solution;
             var extension = Path.GetExtension(fullPath);
