@@ -4,36 +4,52 @@ namespace RoslynMcpServer.Services
 {
     public class SecurityValidator
     {
-        private readonly HashSet<string> _allowedExtensions = new() { ".sln", ".csproj" };
-        private readonly Regex _safePath = new(@"^[a-zA-Z]:[\\/][^<>:|?*]+$");
+        private readonly HashSet<string> _allowedExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".sln",
+            ".csproj",
+        };
 
         public bool ValidateSolutionPath(string path)
         {
             if (string.IsNullOrWhiteSpace(path))
                 return false;
 
-            // Check for path traversal attempts
-            if (path.Contains("..") || path.Contains("~"))
+            if (ContainsTraversalSegment(path))
                 return false;
 
-            // Validate path format
-            if (!_safePath.IsMatch(path))
+            string fullPath;
+            try
+            {
+                if (!Path.IsPathFullyQualified(path))
+                    return false;
+
+                fullPath = Path.GetFullPath(path);
+            }
+            catch
+            {
                 return false;
+            }
 
             // Check file extension
-            var extension = Path.GetExtension(path);
+            var extension = Path.GetExtension(fullPath);
             if (!_allowedExtensions.Contains(extension))
                 return false;
 
             // Verify file exists and is accessible
             try
             {
-                return File.Exists(path);
+                return File.Exists(fullPath);
             }
             catch
             {
                 return false;
             }
+        }
+
+        private static bool ContainsTraversalSegment(string path)
+        {
+            return path.Split(new[] { '/', '\\' }).Any(segment => segment == "..");
         }
 
         public string SanitizeSearchPattern(string pattern)
